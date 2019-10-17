@@ -1,0 +1,46 @@
+package com.company;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class Main{
+    static HashMap<String,String> hmap = new LinkedHashMap<>();
+    static HashMap<String,Integer> values = new LinkedHashMap<>();
+    public static void main(String[] args) {
+        hmap.put("t1","a+b");
+        hmap.put("t2","c+d");
+        hmap.put("t3","t1+e");
+        hmap.put("t4","t1+t3");
+        findValues();
+        for(Map.Entry elem : values.entrySet()){
+            System.out.println(elem.getKey()+" "+elem.getValue());
+        }
+    }
+
+    private static void findValues(){
+        int l=0,r=0;
+        for(Map.Entry elem : hmap.entrySet()){
+            String[] rhs = elem.getValue().toString().split("[+]");
+            if(!values.containsKey(rhs[0]))
+                l=1;
+            else
+                l = values.get(rhs[0]);
+            values.put(rhs[0],l);
+            //==================================================================
+            if(!values.containsKey(rhs[1]))
+                r=0;
+            else
+                r = values.get(rhs[1]);
+            values.put(rhs[1],r);
+            //==================================================================
+            if(l!=r){
+                int max = Math.max(l, r);
+                values.put(elem.getKey().toString(),max);
+            }else{
+                System.out.println("hello");
+                int res = r+1;
+                values.put(elem.getKey().toString(),res);
+            }
+        }
+    }
+}

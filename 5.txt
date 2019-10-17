@@ -1,0 +1,104 @@
+package lp_prac5;
+
+import java.util.*;
+
+/**
+ *
+ * @author rcoem
+ */
+public class LP_prac5 {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        // TODO code application logic here
+        SDTS s=new SDTS();
+    }
+   
+}
+
+class SDTS{
+
+    List<String> list=new ArrayList<>();
+    List<String> tac=new LinkedList<>();
+    List<Integer> el=new LinkedList<>();
+    List<Integer> cond=new LinkedList<>();
+   
+    int i=1;
+   
+    public SDTS() {
+        list.add("if(a<10)");
+        list.add("if(b<10)");
+        list.add("a=b+c");
+        list.add("else");
+        list.add("d=e+f");
+        list.add("else");
+        list.add("z=x+y");
+       
+       
+       
+        for(int i=0;i<list.size();i++){
+            if(list.get(i).substring(0, 2).equals("if")){
+                condition(list.get(i));
+            }
+            if(list.get(i).charAt(1)=='='){
+                argument(list.get(i), 1);
+            }
+            if(list.get(i).matches("else")){
+                elsecondition();
+            }
+        }
+       
+        display(tac);
+        computation();
+        display(tac);
+    }
+   
+    void condition(String stmt){
+        int num=tac.size();
+        cond.add(num);
+        tac.add(stmt+"goto");
+        tac.add("goto");
+    }
+   
+    void elsecondition(){
+        el.add(tac.size());
+        tac.add("goto");
+    }
+   
+    void argument(String arg,int p){
+       String s=arg.substring(0, p);
+       String t=arg.substring(p+1);
+       tac.add("T"+i+"="+t);
+       tac.add(s+"="+"T"+i);
+       i++;  
+    }
+   
+    void computation(){
+        for(int i=0,j=el.size()-1;i<cond.size();i++,j--){
+            int n1=cond.get(i);
+            int n2=el.get(j);
+            if(n1<n2){
+                String s=tac.get(n1)+" "+String.valueOf(n1+3);
+                tac.set(n1, s);
+                String t=tac.get(n1+1)+" "+String.valueOf(n2+2);
+                tac.set((n1+1), t);
+                if(j-1< 0){
+                    String p=tac.get(n2)+" --- ";
+                    tac.set(n2, p);
+                }
+                else{
+                    String q=tac.get(n2)+" "+String.valueOf(el.get(j-1)+1);
+                    tac.set(n2, q);
+                }
+            }
+           
+        }
+    }
+   
+    void display(List li){
+        System.out.println(li);
+    }
+}
+

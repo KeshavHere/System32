@@ -1,0 +1,204 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+public class Prac7 {
+        static HashMap<Integer,String> block1 = new HashMap<>();
+        static HashMap<Integer,String> block2 = new HashMap<>();
+        static HashMap<Integer,String> block3 = new HashMap<>();
+        static HashMap<Integer,String> block4 = new HashMap<>();
+        static HashMap<Integer,String> pred = new HashMap<>();
+    public static void main(String[] args) {  
+        block1.put(1,"sum=0");
+        block1.put(2,"i=0");
+        block2.put(3,"if i>n goto 12");
+        block3.put(4,"T1=addr(a)");
+        block3.put(5,"T2=i*4");
+        block3.put(6,"T3=T1[T2]");
+        block3.put(7,"T4=sum+T3");
+        block3.put(8, "sum=T4");
+        block3.put(9, "T5=i+1");
+        block3.put(10, "i=T5");
+        block3.put(11, "goto 3");
+        block4.put(12,"return sum");
+       
+        pred.put(1, "z");
+        pred.put(2, "1,3");
+        pred.put(3,"2");
+        pred.put(4,"2");
+       
+       
+        System.out.println("Block1: "+find_gen(block1));
+        System.out.println("Block2: "+find_gen(block2));
+        System.out.println("Block3: "+find_gen(block3));
+        System.out.println("Block4: "+find_gen(block4));
+       
+        System.out.println("=============================");
+        System.out.println("Block1: "+find_kill(block1,block2,block3,block4));
+        System.out.println("Block2: "+find_kill(block2,block1,block3,block4));
+        System.out.println("Block3: "+find_kill(block3,block1,block2,block4));
+        System.out.println("Block4: "+find_kill(block4,block1,block2,block3));
+        System.out.println("=============================");
+        find_in_out();
+    }
+   
+    private static String find_gen(HashMap<Integer,String> block){
+        String res="";
+        int flag=0;
+        for(Map.Entry elem:block.entrySet()){
+            if(elem.getValue().toString().contains("=")){
+                res= res+ elem.getKey().toString()+" ";
+                flag=1;
+            }
+        }
+        return res;
+    }
+   
+    private static String find_kill(HashMap<Integer,String> b1,HashMap<Integer,String> b2,HashMap<Integer,String> b3,HashMap<Integer,String> b4){
+        String res="";
+        for(Map.Entry elem:b1.entrySet()){
+            String rhs = elem.getValue().toString();
+            if(rhs.contains("=")){
+                String var = rhs.split("=")[0];
+                for(Map.Entry elem2:b2.entrySet()){
+                    if(elem2.getValue().toString().contains(var+"="))
+                        res= res+ elem2.getKey().toString()+" ";
+                }
+                for(Map.Entry elem2:b3.entrySet()){
+                    if(elem2.getValue().toString().contains(var+"="))
+                        res= res+ elem2.getKey().toString()+" ";
+                }
+                for(Map.Entry elem2:b4.entrySet()){
+                    if(elem2.getValue().toString().contains(var+"="))
+                        res= res+ elem2.getKey().toString()+" ";
+                }
+            }        
+        }
+        return res;
+    }
+   
+    private static void find_in_out(){
+        String in[] = new String[5];
+        String[] out = new String[5];
+        String prev_in[] = new String[5];
+        for(int j=1;j<in.length;j++){
+            in[j]="";prev_in[j]="";
+        }
+        out[1]=find_gen(block1);
+        out[2]=find_gen(block2);
+        out[3]=find_gen(block3);
+        out[4]=find_gen(block4);
+        String[] preds;
+        while(true){
+            preds = pred.get(1).split(",");
+            for(int j=0;j<preds.length;j++){
+                if(preds[j]=="z")
+                    in[1]="";
+                else{                  
+                        in[1]= in[1]+out[Integer.parseInt(preds[j])];
+                }
+            }
+            System.out.println("in[1]: "+in[1]);
+           
+            preds = pred.get(2).split(",");
+            for(int j=0;j<preds.length;j++){
+                if(preds[j]=="z")
+                    in[2]="";
+                else{
+                    in[2]= in[2]+out[Integer.parseInt(preds[j])];
+                }
+            }
+            System.out.println("in[2]: "+in[2]);
+           
+            preds = pred.get(3).split(",");
+            for(int j=0;j<preds.length;j++){
+                if(preds[j]=="z")
+                    in[3]="";
+                else{
+                    in[3]= in[3]+out[Integer.parseInt(preds[j])];
+                }
+            }
+            System.out.println("in[3]: "+in[3]);
+           
+            preds = pred.get(4).split(",");
+            for(int j=0;j<preds.length;j++){
+                if(preds[j]=="z")
+                    in[4]="";
+                else{
+                    in[4]= in[4]+out[Integer.parseInt(preds[j])];
+                }
+            }
+            System.out.println("in[4]: "+in[4]);
+            //==================================================================================          
+            out[1]= uncommon(in[1],find_kill(block1,block2,block3,block4));
+            if(out[1]=="")
+                out[1]=find_gen(block1);
+            else
+                out[1]=out[1]+" "+find_gen(block1);
+            System.out.println("out[1]: "+out[1]);
+                       
+            out[2]= uncommon(in[2],find_kill(block2,block1,block3,block4));
+            if(out[2]=="")
+                out[2]=find_gen(block2);
+            else
+                out[2]=out[2]+" "+find_gen(block2);
+            System.out.println("out[2]: "+out[2]);
+           
+            out[3]= uncommon(in[3],find_kill(block3,block1,block2,block4));
+            if(out[3]=="")
+                out[3]=find_gen(block3);
+            else
+                out[3]=out[3]+" "+find_gen(block3);
+            System.out.println("out[3]: "+out[3]);
+           
+            out[4]= uncommon(in[4],find_kill(block4,block1,block2,block3));
+            if(out[4]=="")
+                out[4]=find_gen(block4);
+            else
+                out[4]=out[4]+" "+find_gen(block4);
+            System.out.println("out[4]: "+out[4]);
+            //===================================================================================
+            if(arrays_equal(in,prev_in))
+                break;
+            for(int k=0;k<prev_in.length;k++)
+               prev_in[k]=in[k];            
+            for(int k=0;k<prev_in.length;k++)
+               in[k]="";
+            System.out.println("=======^^^^^^^^^^^^^^^^^^^^^^^^^^===========================");
+        }
+    }
+   
+    private static String uncommon(String a,String b){
+        String res="";
+        int flag=0;
+        for(int i=0;i<a.length();i++){
+            for(int j=0;j<b.length();j++){
+                if(a.charAt(i)==b.charAt(j)){
+                    flag=1;
+                    break;
+                }
+            }
+            if(flag!=1)
+                res = res + a.charAt(i);
+        }
+        return res;
+    }
+   
+    private static boolean arrays_equal(String[] a,String[] b){
+        int m = a.length;int i=0;
+        for(i=0;i<m;i++){
+            if(a[i]==null && b[i]==null)
+                continue;
+            else if(a[i]==null || b[i]==null)
+                return false;
+            if(a[i].equals(b[i]))
+                continue;
+            else
+                return false;
+        }
+        return true;
+    }
+       
+}

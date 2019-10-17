@@ -1,0 +1,74 @@
+package com.company;
+import java.util.ArrayList;
+
+public class Main
+{
+    public static void main(String[] args)
+    {
+        String[] code={"While","(","a>5",")","{","a=a+b","While","(","b<5",")","{","b=a+c","}","}"};
+        //String[] l1 = null;
+        int k=1;int close=0;int address=100;
+        ArrayList<String> l1 = new ArrayList<>();
+        ArrayList<Integer> whls = new ArrayList<>();
+        ArrayList<Integer> assign = new ArrayList<>();
+
+        for(int i=0;i<code.length;i++)
+        {
+            if(code[i].equalsIgnoreCase("while") && code[i+1].equals("("))
+            {
+                int j=2;
+                while(!code[i+j].equals(")"))
+                {
+                    l1.add("if "+code[i+j]+" goto _");
+                    whls.add(address);
+                    close++;
+                    l1.add("goto _");
+                    j++;
+                    address=address+2;
+                }
+                if(code[i+j+1].equals("{"))
+                {
+                    i=i+j+2;
+                }
+            }
+            if(code[i].contains("="))
+            {
+                assign.add(address);
+                String[] assg=code[i].split("=");
+                l1.add("T"+k+"="+assg[1]);
+                l1.add(assg[0]+"="+"T"+k);
+                k++;
+                address=address+2;
+            }
+            if(code[i].equals("}"))
+            {
+                l1.add("goto _"+whls.get(close-1));
+                close--;
+                address++;
+
+            }
+        }
+        for(int i=0;i<l1.size();i++)
+        {
+            System.out.println("10"+i+"  "+ l1.get(i));
+        }
+
+        close=1;
+        for(int i=0;i<l1.size();i++)
+        {
+            if(l1.get(i).contains("if"))
+            {
+                String s=l1.remove(i);
+                s=s+assign.get(close-1);
+                close++;
+                l1.add(i,s);
+            }
+        }
+        System.out.println("\n");
+
+        for(int i=0;i<l1.size();i++)
+        {
+            System.out.println("10"+i+"  "+ l1.get(i));
+        }
+    }
+}

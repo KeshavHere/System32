@@ -1,0 +1,246 @@
+package com.company;
+import java.util.HashMap;
+import java.util.Scanner;
+
+class Temp{
+    String name="T";
+    public Temp(String i){
+        this.name = this.name + i;
+    }
+}
+
+final class MyResult {
+    private final String[] first;
+    private final String[] second;
+    public MyResult(){
+        this.first = new String[2];
+        this.second = new String[3];
+    }
+
+    public MyResult(String[] first, String[] second) {
+        this.first = first;
+        this.second = second;
+    }
+
+    public String[] getFirst() {
+        return first;
+    }
+
+    public String[] getSecond() {
+        return second;
+    }
+}
+
+public class Main {
+    static int ifgoto[] = new int[2];
+    static int onlygoto[] = new int[5];
+    static int if1=0;
+    static int goto1=0;
+    static HashMap<Integer, String> map= new HashMap<Integer, String>();
+
+    public static String generate(){
+        return "\n";
+    }
+
+    public static String[] generate(String s){
+        if(s.charAt(1)=='<' || s.charAt(1)=='>' ){
+            String retarr1[] = new String[2];
+            retarr1[0] = "if "+ s +" goto ___";
+            retarr1[1] = "goto ___";
+            return retarr1;
+        }
+        else {
+            String retarr2[] = {s};
+            return retarr2;
+        }
+    }
+
+    public static String[] generate(String s, String i){
+
+        Temp t1 = new Temp(i);
+        String splarr[] = s.split("=");
+
+        StringBuilder builder1 = new StringBuilder(splarr[0]);
+        StringBuilder builder2 = new StringBuilder(splarr[1]);
+        String str = builder2.toString();
+
+        if(splarr[0].charAt(0) == '{'){
+            builder1.deleteCharAt(0);
+        }
+
+        if(builder2.charAt(splarr[1].length()-3) == ';') {
+            str = builder2.substring(0, builder2.toString().length() - 3);
+        }
+
+        else if(builder2.charAt(splarr[1].length()-2) == ';') {
+            str = builder2.substring(0, builder2.toString().length() - 2);
+        }
+
+        String[] retarr3 = new String[3];
+        retarr3[0] = t1.name+"="+str;
+        retarr3[1] = builder1.toString()+"="+t1.name;
+        retarr3[2] = "goto ___";
+        return retarr3;
+    }
+
+    public static MyResult splitting(String input){
+
+        String arr11[] = input.split("\\(", 2);
+        String arr21[] = arr11[1].split("\\)", 2);
+        String arr31[] = arr21[0].split(";",3);
+
+        return new MyResult(arr21, arr31);
+    }
+
+    public static int printTAC(String[] s, int address){
+
+        for (int i = 0; i < s.length; i++) {
+            address++;
+            map.put(address, s[i]);
+            System.out.println(address + ": "+ s[i]);
+            if(s[i].contains("if") && s[i].contains("goto")){
+                ifgoto[if1] = address;
+                if1++;
+            }
+            else if(s[i].contains("goto")){
+                onlygoto[goto1] = address;
+                goto1++;
+            }
+        }
+
+        return address;
+    }
+
+    public static boolean check(int[] arr, int c){
+        boolean test = false;
+        for (int element : arr) {
+            if (element == c) {
+                test = true;
+                break;
+            }
+        }
+        return test;
+    }
+
+    public static void printBackpatchTAC(int lastAddress, int[] m){
+        int c=100;
+        int i1=2;
+        int i2=0;
+        while(c<lastAddress){
+            if(check(ifgoto, c)){
+                //System.out.println("Inside ifgoto");
+                String str = map.get(c).substring(0,map.get(c).length()-3) + String.valueOf(m[i1]);
+                System.out.println(c+" : "+str);
+                i1=i1+3;
+            }
+            else if(check(onlygoto, c)){
+                //System.out.println("Inside onlygoto");
+                if(i2==2 || i2==5){
+                    i2=i2+1;
+                    String str = map.get(c).substring(0, map.get(c).length() - 3) + String.valueOf(m[i2-2]);
+                    System.out.println(c + " : " + str);
+                }
+                else if(i2!=0) {
+                    String str = map.get(c).substring(0, map.get(c).length() - 3) + String.valueOf(m[i2-1]);
+                    System.out.println(c + " : " + str);
+                }
+                if(i2==0){
+                    String str1 = map.get(c).substring(0,map.get(c).length()-3) + String.valueOf(lastAddress);
+                    System.out.println(c+" : "+str1);
+                }
+                i2++;
+            }
+            else{
+                System.out.println(c+" : "+map.get(c));
+            }
+            c++;
+        }
+    }
+
+    public static void main(String[] args) {
+        int address = 100;
+        int count=1;
+        int mcount=0;
+        int lastAddress=0;
+        Scanner in = new Scanner(System.in);
+        System.out.println("Enter the no of for loops: ");
+        int n = in.nextInt();
+        int m[] = new int[n*3];
+        for (int i = 0; i < m.length; i++)
+            m[i] = -1;
+        for (int i = 0; i < ifgoto.length; i++)
+            ifgoto[i] = -1;
+        for (int i = 0; i < onlygoto.length; i++)
+            onlygoto[i] = -1;
+        in.nextLine();
+        System.out.println("Enter the expression: ");
+        String input = in.nextLine();
+        System.out.println("\nTAC: ");
+
+        MyResult result = splitting(input);
+        String arr2[] = result.getFirst();
+        String arr3[] = result.getSecond();
+
+        String for11[] = generate(arr3[0]);
+        map.put(address, for11[0]);
+        System.out.println(address +": " + for11[0]);
+
+        String for12[] = generate(arr3[1]);
+        m[mcount] = address+1;
+        address = printTAC(for12, address);
+
+        mcount++;
+        m[mcount] = address+1;
+        String for13[] = generate(arr3[2],String.valueOf(count));
+        address = printTAC(for13, address);
+
+        if(arr2[1].startsWith("{for")){
+
+            MyResult result1 = splitting(arr2[1]);
+            String arr4[] = result1.getSecond();
+            String arr5[] = result1.getFirst();
+
+            String for21[] = generate(arr4[0]);
+            mcount++;
+            m[mcount] = address+1;
+            address = printTAC(for21, address);
+
+            String for22[] = generate(arr4[1]);
+            mcount++;
+            m[mcount] = address+1;
+            address = printTAC(for22, address);
+
+            count++;
+            String for23[] = generate(arr4[2],String.valueOf(count));
+            mcount++;
+            m[mcount] = address+1;
+            address = printTAC(for23, address);
+
+            if(arr5[1].startsWith("{")) {
+                //assignment statement
+                count++;
+                String[] stt1 = generate(arr5[1], String.valueOf(count));
+                mcount++;
+                m[mcount] = address + 1;
+                address = printTAC(stt1, address);
+                lastAddress = address + 1;
+            }
+            else if(arr5[1].startsWith("{for")){
+                System.out.println("Not coded till this point :( Try again with number of for loops<=2!");
+            }
+        }
+        //assignment statement
+        else {
+            count++;
+            String[] stt1 = generate(arr2[1], String.valueOf(count));
+            mcount++;
+            m[mcount] = address+1;
+            address = printTAC(stt1, address);
+            lastAddress=address+1;
+        }
+
+        System.out.println("\n\nThe backpatched TAC is as follows:");
+        printBackpatchTAC(lastAddress, m);
+        System.out.println("\n"+ lastAddress+" is OUT OF LOOP");
+    }
+}

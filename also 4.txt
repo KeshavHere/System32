@@ -1,0 +1,128 @@
+package lp_prac4;
+
+import java.util.*;
+
+/**
+ *
+ * @author rcoem
+ */
+public class LP_prac4 {
+
+    /**
+     * @param args the command line arguments
+     */
+  
+    static Hashtable<String,Integer> h=new Hashtable<>();
+    public static void main(String[] args) {
+        // TODO code application logic here
+        List<String> l = new ArrayList<>();
+        l.add("S->AxB");
+        l.add("S->Bc");
+        l.add("A->yA");
+        l.add("A->z");
+        l.add("B->xB");
+        l.add("B->q");
+      
+//        Hashtable<String,Integer> h=new Hashtable<>();
+      
+        h.put("c", 0);
+        h.put("x", 1);
+        h.put("y", 2);
+        h.put("z", 3);
+        h.put("$", 4);
+        h.put("S", 5);
+        h.put("A", 6);
+        h.put("B", 7);
+      
+        String t[][]=new String[12][8];
+        t[0][h.get("c")]="R6";
+        t[0][h.get("x")]="S6";
+        t[0][h.get("y")]="S4";
+        t[0][h.get("z")]="S5";
+        t[0][h.get("$")]="R6";
+        t[0][h.get("S")]="1";
+        t[0][h.get("A")]="2";
+        t[0][h.get("B")]="3";
+        t[1][h.get("$")]="Accept";
+        t[2][h.get("x")]="S7";
+        t[3][h.get("c")]="S8";
+        t[4][h.get("y")]="S4";
+        t[4][h.get("z")]="S5";
+        t[4][h.get("A")]="9";
+        t[5][h.get("x")]="R4";
+        t[6][h.get("c")]="R6";
+        t[6][h.get("x")]="S6";
+        t[6][h.get("$")]="R6";
+        t[6][h.get("B")]="10";
+        t[7][h.get("c")]="R6";
+        t[7][h.get("x")]="S6";
+        t[7][h.get("$")]="R6";
+        t[7][h.get("B")]="11";
+        t[8][h.get("$")]="R2";
+        t[9][h.get("x")]="R3";
+        t[10][h.get("c")]="R5";
+        t[10][h.get("$")]="R5";
+        t[11][h.get("$")]="R1";
+      
+        String c=validation(l,t);
+        System.out.println(c);
+    }
+  
+    public static String validation(List<String> list,String table[][]){
+        String check="Invalid String!";
+        int count=0;
+      
+        Stack<String> stack=new Stack<>();
+        Stack<String> buffer=new Stack<>();
+      
+        stack.push("0");
+      
+        buffer.push("$");
+        buffer.push("x");
+        buffer.push("x");
+        buffer.push("z");
+        buffer.push("y");
+      
+        while(!table[Integer.parseInt(stack.peek())][h.get(buffer.peek())].equals("Accept")){
+            String s=table[Integer.parseInt(stack.peek())][h.get(buffer.peek())];
+            if(s.charAt(0)=='S'){
+                String str=s.substring(1);
+                stack.push(buffer.pop());
+                stack.push(str);
+            }
+            else if(s.charAt(0)=='R'){
+                String str=s.substring(1);
+                String get=list.get(Integer.parseInt(str)-1);
+                int length=get.substring(3).length();
+                for(int i=0;i<(2*length);i++){
+                    if(stack.isEmpty()){
+                        break;
+                    }
+                    stack.pop();
+                }
+                stack.push(Character.toString(get.charAt(0)));
+                if(stack.isEmpty()){
+                    break;
+                }
+                String s1=stack.pop();
+                if(stack.isEmpty()){
+                    break;
+                }
+                String s2=stack.pop();
+                String g=table[Integer.parseInt(s2)][h.get(s1)];
+                stack.push(s2);
+                stack.push(s1);
+                stack.push(g);               
+            }
+//            if(!stack.isEmpty() && !buffer.isEmpty()){
+                if(table[Integer.parseInt(stack.peek())][h.get(buffer.peek())].equals("Accept")){
+                    check="Valid String!";
+                }
+           
+        }
+      
+        return check;
+    }
+  
+}
+
