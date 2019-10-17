@@ -1,0 +1,915 @@
+//////////////////////////1////////////////////////////////////
+##lex
+
+%{
+	#include "a.tab.h"
+%}
+%%
+for {return FOR;}
+\( {return OB;}
+\) {return CB;}
+=|<|>|== {return ROP;}
+[a-zA-Z]+[a-zA-Z0-9]* {return ID;}
+[0-9]+ {return NUM;}
+"{" {return OCB;}
+"}" {return CCB;}
+; {return SC;}
+("++"|"--") {return INC;}
+\n {return NL;}
+. {return yytext[0];}
+%%
+
+##yacc
+%token FOR OB CB ROP ID NUM OCB CCB INC SC NL
+%left '+''-'
+%left '/''*'
+%%
+stmt : FOR OB ID ROP NUM SC ID ROP NUM SC ID INC CB NL OCB NL stmt NL CCB NL {printf("Is a valid for loop\n");}
+     | A
+     ;
+A : ID ROP E
+  ;
+E : E'+'E
+  | E'-'E
+  | E'*'E
+  | E'/'E
+  | '('E')'
+  | ID
+  | NUM
+%%
+int yyerror(char* msg)
+{
+	printf("not a valid loop\n");
+ return 0;
+}
+int main()
+{
+	yyparse();
+}
+
+##end
+//////////////////////////////////////////////////////////////////////////////
+3
+package mymyprac3;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Scanner;
+
+public class Main_mymyprac3 
+{
+	public static void main(String args[]) throws Exception
+	{
+		Scanner sc = new Scanner(new File("/home/kaiwatsatsat/sem7/LP/lab/prac3/prac3b.txt"));
+		HashMap<String,String> productions = new HashMap<String,String>();
+		while(sc.hasNextLine())
+		{
+			String tmp1 = sc.nextLine();
+			String[] tmp2 = tmp1.split("-");
+			productions.put(tmp2[0],tmp2[1]);
+			System.out.println(tmp2[0]+" "+tmp2[1]);
+		}
+		System.out.println(findFollow('B',productions));
+		
+		System.out.println("LL table createion");
+		HashSet<Character> nonterminals = new HashSet<Character>();
+		HashSet<Character> terminals = new HashSet<Character>();
+		for(String cs:productions.keySet())
+		{
+			Character c = cs.charAt(0);
+			nonterminals.add(c);
+		}
+		for(Character c:nonterminals)
+		{
+			String prod = productions.get(c+"");
+			for(int i=0;i<prod.length();i++)
+			{
+				if(!terminals.contains(prod.charAt(i)) && prod.charAt(i)!=',' && Character.isLowerCase(prod.charAt(i)))
+					terminals.add(prod.charAt(i));
+			}
+		}
+		terminals.add('$');
+			  //nonterminal          input  productiontouse
+		HashMap<Character, HashMap<Character,String> > lltable = new HashMap<Character, HashMap<Character,String> >();
+		for(Character n:nonterminals)
+		{
+			HashMap<Character,String> temp = new HashMap<Character,String>();
+			for(Character t:terminals )
+				temp.put(t,"");
+			lltable.put(n,temp);
+			
+			String first=findFirst(n+"",productions);
+			String follow;
+			if(first.contains("z"))
+			{
+				follow = findFollow(n,productions);
+				for(int i=0;i<follow.length();i++)
+				{
+					lltable.get(n).put(follow.charAt(i),n+"-z");
+				}
+			}
+			for(int i=0;i<first.length();i++)
+			{
+				if(first.charAt(i)!='z')
+				{
+					String prod[]=productions.get(n+"").split(",");
+					for(int j=0;j<prod.length;j++)
+					{
+						if(findFirst(prod[j],productions).contains(first.charAt(i)+""))
+						{
+							lltable.get(n).put(first.charAt(i), lltable.get(n).get(first.charAt(i))+","+ n+"-"+prod[j]);
+						}
+					}
+					
+				}
+			}
+			
+			
+		}
+		HashMap<Character,String> smap=lltable.get('S');
+		for(Character c:smap.keySet())
+		{
+			System.out.println(c+"   "+smap.get(c));
+			
+		}
+		
+	}
+	public static String findFirst(String s, HashMap<String,String> productions)
+	{
+		String result="";
+		if(s==null)
+			return result;
+		if(s.length()==0)
+			return result;
+		if(Character.isLowerCase(s.charAt(0)))
+		{
+			result=result+s.charAt(0);
+		}
+		else
+		{
+			String prod[]=productions.get(s.charAt(0)+"").split(",");
+			for(int i=0;i<prod.length;i++)
+			{
+				String ff = findFirst(prod[i],productions);
+				for(int j=0;j<ff.length();j++)
+				{
+					if(!result.contains(ff.charAt(j)+""))
+						result=result+ff.charAt(j);
+				}
+				if(ff.contains("z"))
+				{
+					String tmp = prod[i].replaceAll("z","");
+					ff = findFirst(prod[i],productions);
+					for(int j=0;j<ff.length();j++)
+					{
+						if(!result.contains(ff.charAt(j)+""))
+							result=result+ff.charAt(j);
+					}
+				}
+			}
+			if(result.contains("z"))
+			{
+				result=result.replaceAll("z","");
+				int flag=0;
+				boolean zpossible=false;
+				for(int i=0;i<prod.length;i++)
+				{
+					flag=0;
+					for(int j=0;j<prod[i].length();j++)
+					{
+						if(Character.isLowerCase(prod[i].charAt(j)) && prod[i].charAt(j)!='z')
+						{
+							break;
+						}
+						if(prod[i].charAt(j)=='z')
+						{	flag++;
+							continue;
+						}
+						if(productions.get(prod[i].charAt(j)+"").contains("z"))
+						{
+							flag++;
+						}
+					}
+					if(flag==prod[i].length())
+					{
+						zpossible=true;
+						break;
+					}
+				}
+				if(zpossible)
+					result+="z";
+			}
+		}
+		return result;
+	}
+	public static String findFollow(char c,HashMap<String,String> productions)
+	{
+		String result="";
+		if(c=='S')
+			return "$";
+		for(String key:productions.keySet())
+		{
+			String[] prod=productions.get(key).split(",");
+			for(int i=0;i<prod.length;i++)
+			{
+				if(prod[i].contains(c+""))
+				{
+					int index = prod[i].indexOf(c);
+					if(index!=prod[i].length()-1)
+					{
+						String ff=findFirst(prod[i].substring(index+1)+"",productions);
+						if(ff.contains("z"))
+						{
+							ff=ff.replaceAll("z","");
+							result = result + findFollow(key.charAt(0),productions);
+						}
+						for(int j=0;j<ff.length();j++)
+						{
+							if(!result.contains(ff.charAt(j)+""))
+								result=result+ff.charAt(j);
+						}
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
+}
+//////////////////////////////////////////////////////////////////////////
+4
+package myprac4;
+
+import java.util.HashMap;
+import java.util.Queue;
+import java.util.Stack;
+
+public class Main_myprac4 
+{
+	public static void main(String[] args)
+	{
+		HashMap<Character,String>[] lrtable=new HashMap[12];
+		for(int i=0;i<12;i++)
+		{
+			lrtable[i]=new HashMap<Character,String>();
+		}
+		lrtable[0].put('i',"S-5");lrtable[0].put('(',"S-4");lrtable[0].put('E',"1");lrtable[0].put('T',"2");lrtable[0].put('F',"3");
+		lrtable[1].put('+',"S-6");lrtable[1].put('$',"A");
+		lrtable[2].put('+',"R-2");lrtable[2].put('*',"S-7");lrtable[2].put(')',"R-2");lrtable[2].put('$',"R-2");
+		lrtable[3].put('+',"R-4");lrtable[3].put('*',"R-4");lrtable[3].put(')',"R-4");lrtable[3].put('$',"R-4");
+		lrtable[4].put('i',"S-5");lrtable[4].put('(',"S-4");lrtable[4].put('E',"8");lrtable[4].put('T',"2");lrtable[4].put('F',"3");
+		lrtable[5].put('+',"R-6");lrtable[5].put('*',"R-6");lrtable[5].put(')',"R-6");lrtable[5].put('$',"R-6");
+		lrtable[6].put('i',"S-5");lrtable[6].put('(',"S-4");lrtable[6].put('T',"9");lrtable[6].put('F',"3");
+		lrtable[7].put('i',"S-5");lrtable[7].put('(',"S-4");lrtable[7].put('F',"10");
+		lrtable[8].put('+',"S-6");lrtable[8].put(')',"S-11");
+		lrtable[9].put('+',"R-1");lrtable[9].put('*',"S-7");lrtable[9].put(')',"R-1");lrtable[9].put('$',"R-1");
+		lrtable[10].put('+',"R-3");lrtable[10].put('*',"R-3");lrtable[10].put(')',"R-3");lrtable[10].put('$',"R-3");
+		lrtable[11].put('+',"R-5");lrtable[11].put('*',"R-5");lrtable[11].put(')',"R-5");lrtable[11].put('$',"R-5");
+
+		String[] grammer = new String[7];
+		grammer[1]="E-E+T";
+		grammer[2]="E-T";
+		grammer[3]="T-T*F";
+		grammer[4]="T-F";
+		grammer[5]="F-(E)";
+		grammer[6]="F-i";
+		//validation
+		String input="i*i+i$";
+		Stack<String> stack = new Stack();
+		Stack<Character> buffer = new Stack();
+		for(int i=input.length()-1;i>=0;i--)
+		{
+			buffer.push(input.charAt(i));
+		}
+		stack.push("0");
+		while(true)
+		{
+			Character buffertop=buffer.peek();
+			
+			String stacktop=stack.peek();
+			System.out.println("stacktop="+stacktop+"   buffertop="+buffertop);
+			Integer index = Integer.parseInt(stacktop+"");
+			String action = lrtable[index].get(buffertop);
+			if(action.charAt(0)=='A')
+			{
+				System.out.println("String accepted");
+				break;
+			}
+			else if(action.charAt(0)=='S')
+			{
+				System.out.println("ACTION SHIFT pushing "+buffer.peek()+" on the stack and removing it from buffer");
+				stack.push(buffer.peek()+"");
+				stack.push(action.split("-")[1]);
+				buffer.pop();
+			}
+			else if(action.charAt(0)=='R')
+			{
+				System.out.println("ACTION REDUCE");
+				String rhs = grammer[Integer.parseInt(action.split("-")[1])].split("-")[0];
+				String lhs = grammer[Integer.parseInt(action.split("-")[1])].split("-")[1];
+				System.out.println("reducing with the rule "+rhs+"-"+lhs);
+				for(int i=0;i<2*lhs.length();i++)
+				{
+					//System.out.println("popping"+stack.peek());
+					stack.pop();
+				}
+					
+				int sp = Integer.parseInt(stack.peek());
+				System.out.println("sp is"+sp+" "+rhs+" "+lrtable[sp].get(rhs.charAt(0)));
+				stack.push(rhs);
+				stack.push(lrtable[sp].get(rhs.charAt(0)));
+			}
+			else
+			{
+				System.out.println("kuch to gadbad hai");
+			}
+			
+		}
+		
+				
+						
+	}
+
+}
+//////////////////////////////////////////////////////////////////////
+5
+package prac5;
+
+import java.util.HashMap;
+import java.util.Scanner;
+
+class Temp{
+    String name="T";
+    public Temp(String i){
+        this.name = this.name + i;
+    }
+}
+
+final class MyResult {
+    private final String[] first;
+    private final String[] second;
+    public MyResult(){
+        this.first = new String[2];
+        this.second = new String[3];
+    }
+
+    public MyResult(String[] first, String[] second) {
+        this.first = first;
+        this.second = second;
+    }
+
+    public String[] getFirst() {
+        return first;
+    }
+
+    public String[] getSecond() {
+        return second;
+    }
+}
+
+public class Main {
+    static int ifgoto[] = new int[2];
+    static int onlygoto[] = new int[5];
+    static int if1=0;
+    static int goto1=0;
+    static HashMap<Integer, String> map= new HashMap<Integer, String>();
+
+    public static String generate(){
+        return "\n";
+    }
+
+    public static String[] generate(String s){
+        if(s.charAt(1)=='<' || s.charAt(1)=='>' ){
+            String retarr1[] = new String[2];
+            retarr1[0] = "if "+ s +" goto ___";
+            retarr1[1] = "goto ___";
+            return retarr1;
+        }
+        else {
+            String retarr2[] = {s};
+            return retarr2;
+        }
+    }
+
+    public static String[] generate(String s, String i){
+
+        Temp t1 = new Temp(i);
+        String splarr[] = s.split("=");
+
+        StringBuilder builder1 = new StringBuilder(splarr[0]);
+        StringBuilder builder2 = new StringBuilder(splarr[1]);
+        String str = builder2.toString();
+        if(splarr[0].charAt(0) == '{'){
+            builder1.deleteCharAt(0);
+        }
+        if(builder2.charAt(splarr[1].length()-3) == ';') {
+            str = builder2.substring(0, builder2.toString().length() - 3);
+        }
+        else if(builder2.charAt(splarr[1].length()-2) == ';') {
+            str = builder2.substring(0, builder2.toString().length() - 2);
+        }
+
+        String[] retarr3 = new String[3];
+        retarr3[0] = t1.name+"="+str;
+        retarr3[1] = builder1.toString()+"="+t1.name;
+        retarr3[2] = "goto ___";
+        return retarr3;
+    }
+
+    public static MyResult splitting(String input){
+
+        String arr11[] = input.split("\\(", 2);
+        String arr21[] = arr11[1].split("\\)", 2);
+        String arr31[] = arr21[0].split(";",3);
+
+        return new MyResult(arr21, arr31);
+    }
+
+    public static int printTAC(String[] s, int address){
+
+        for (int i = 0; i < s.length; i++) {
+            address++;
+            map.put(address, s[i]);
+            System.out.println(address + ": "+ s[i]);
+            if(s[i].contains("if") && s[i].contains("goto")){
+                ifgoto[if1] = address;
+                if1++;
+            }
+            else if(s[i].contains("goto")){
+                onlygoto[goto1] = address;
+                goto1++;
+            }
+        }
+        return address;
+    }
+
+    public static boolean check(int[] arr, int c){
+        boolean test = false;
+        for (int element : arr) {
+            if (element == c) {
+                test = true;
+                break;
+            }
+        }
+        return test;
+    }
+
+    public static void printBackpatchTAC(int lastAddress, int[] m){
+        int c=100;
+        int i1=2;
+        int i2=0;
+        while(c<lastAddress){
+            if(check(ifgoto, c)){
+                //System.out.println("Inside ifgoto");
+                String str = map.get(c).substring(0,map.get(c).length()-3) + String.valueOf(m[i1]);
+                System.out.println(c+" : "+str);
+                i1=i1+3;
+            }
+            else if(check(onlygoto, c)){
+                //System.out.println("Inside onlygoto");
+                if(i2==2 || i2==5){
+                    i2=i2+1;
+                    String str = map.get(c).substring(0, map.get(c).length() - 3) + String.valueOf(m[i2-2]);
+                    System.out.println(c + " : " + str);
+                }
+                else if(i2!=0) {
+                    String str = map.get(c).substring(0, map.get(c).length() - 3) + String.valueOf(m[i2-1]);
+                    System.out.println(c + " : " + str);
+                }
+                if(i2==0){
+                    String str1 = map.get(c).substring(0,map.get(c).length()-3) + String.valueOf(lastAddress);
+                    System.out.println(c+" : "+str1);
+                }
+                i2++;
+            }
+            else{
+                System.out.println(c+" : "+map.get(c));
+            }
+            c++;
+        }
+
+    }
+
+    public static void main(String[] args) {
+        int address = 100;
+        int count=1;
+        int mcount=0;
+        int lastAddress=0;
+        Scanner in = new Scanner(System.in);
+        System.out.println("Enter the no of for loops: ");
+        int n = in.nextInt();
+        int m[] = new int[n*3];
+        for (int i = 0; i < m.length; i++)
+            m[i] = -1;
+        for (int i = 0; i < ifgoto.length; i++)
+            ifgoto[i] = -1;
+        for (int i = 0; i < onlygoto.length; i++)
+            onlygoto[i] = -1;
+        in.nextLine();
+        System.out.println("Enter the expression: ");
+        String input = in.nextLine();
+        System.out.println("\nTAC: ");
+
+        MyResult result = splitting(input);
+        String arr2[] = result.getFirst();
+        String arr3[] = result.getSecond();
+
+        String for11[] = generate(arr3[0]);
+        map.put(address, for11[0]);
+        System.out.println(address +": " + for11[0]);
+
+        String for12[] = generate(arr3[1]);
+        m[mcount] = address+1;
+        address = printTAC(for12, address);
+
+        mcount++;
+        m[mcount] = address+1;
+        String for13[] = generate(arr3[2],String.valueOf(count));
+        address = printTAC(for13, address);
+
+        if(arr2[1].startsWith("{for")){
+
+            MyResult result1 = splitting(arr2[1]);
+            String arr4[] = result1.getSecond();
+            String arr5[] = result1.getFirst();
+
+            String for21[] = generate(arr4[0]);
+            mcount++;
+            m[mcount] = address+1;
+            address = printTAC(for21, address);
+
+            String for22[] = generate(arr4[1]);
+            mcount++;
+            m[mcount] = address+1;
+            address = printTAC(for22, address);
+
+            count++;
+            String for23[] = generate(arr4[2],String.valueOf(count));
+            mcount++;
+            m[mcount] = address+1;
+            address = printTAC(for23, address);
+
+            if(arr5[1].startsWith("{")) {
+                //assignment statement
+                count++;
+                String[] stt1 = generate(arr5[1], String.valueOf(count));
+                mcount++;
+                m[mcount] = address + 1;
+                address = printTAC(stt1, address);
+                lastAddress = address + 1;
+            }
+            else if(arr5[1].startsWith("{for")){
+                System.out.println("Not coded till this point :( Try again with number of for loops<=2!");
+            }
+        }
+        //assignment statement
+        else {
+            count++;
+            String[] stt1 = generate(arr2[1], String.valueOf(count));
+            mcount++;
+            m[mcount] = address+1;
+            address = printTAC(stt1, address);
+            lastAddress=address+1;
+        }
+//        for (int i = 0; i < 6; i++) {
+//            System.out.println("M"+i+": "+m[i]);
+//        }
+//        for (int i = 0; i < ifgoto.length; i++) {
+//            System.out.println("if"+i+": "+ifgoto[i]);
+//        }
+//        for (int i = 0; i < onlygoto.length; i++) {
+//            System.out.println("goto"+i+": "+onlygoto[i]);
+//        }
+        System.out.println("\n\nThe backpatched TAC is as follows:");
+        printBackpatchTAC(lastAddress, m);
+        System.out.println("\n"+ lastAddress+" is OUT OF LOOP");
+    }
+}
+////////////////////////////////////////////
+6-7
+package prac7;
+
+import java.io.BufferedReader;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.io.FileReader;
+import java.util.ArrayList;
+
+public class Main {
+
+	public static void main(String[] args) throws Exception {
+        BufferedReader reader;
+        reader = new BufferedReader(new FileReader("/home/kaiwatsatsat/sem7/LP/lab/prac7/prac7inp.txt"));
+        String line = reader.readLine();
+        ArrayList<Integer> leaders=new ArrayList<Integer>();
+        ArrayList<String> lines = new ArrayList<String>();
+        
+        //find all the leaders and add all lines to lines arraylist
+        leaders.add(1);
+        int i=1;
+        while(line!=null)
+        {
+            System.out.println(i+" "+line);
+            lines.add(line);
+            if(isOnlyGoto(line)!="-1")
+            {
+                leaders.add(Integer.parseInt(isOnlyGoto(line)));
+            }
+            else if(isConditionalGoto(line)!="-1")
+            {
+                leaders.add(i+1);
+                leaders.add(Integer.parseInt(isConditionalGoto(line)));
+            }
+            i++;
+            line=reader.readLine();
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        leaders.sort(null);
+        System.out.println("These are the leaders: "+leaders);
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        reader.close();
+        System.out.println("Following is the lines ArrayList:");
+        System.out.println(lines);
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        /////////////////////////////////////////////////////////////////////
+        //create basic blocks
+        ArrayList<BasicBlock> basicBlocks = new ArrayList<BasicBlock>();
+        BasicBlock temp;
+        //System.out.println("mama");
+        for(int ii=0;ii<leaders.size()-1;ii++)
+        {
+        	temp=new BasicBlock();
+        	temp.leaderLine=leaders.get(ii);
+        	temp.endLine=leaders.get(ii+1)-1;
+        	//System.out.println("kaka");
+        	basicBlocks.add(temp);
+        }
+        temp = new BasicBlock();
+        temp.leaderLine=leaders.get(leaders.size()-1);
+        temp.endLine=lines.size();
+        basicBlocks.add(temp);
+        ////////////////////////////////////////////////////////////////////////
+        //create Program Flow Graph
+        for(BasicBlock y:basicBlocks)
+        {
+        	String yendline = lines.get(y.endLine-1);
+        	if(isConditionalGoto(yendline)!="-1")
+        	{
+        		//System.out.println("OUCH1"+isConditionalGoto(yendline));
+        		for(BasicBlock tmp:basicBlocks)
+        		{
+        			if(tmp.leaderLine==Integer.parseInt(isConditionalGoto(yendline)))
+        			{
+        				y.next.add(tmp);
+        			}
+        			if(tmp.leaderLine==y.endLine+1)
+        			{
+        				y.next.add(tmp);
+        			}
+        		}
+        	}
+        	else if(isOnlyGoto(yendline)!="-1")
+        	{
+        		//System.out.println("OUCH2"+isOnlyGoto(yendline));
+        		for(BasicBlock tmp:basicBlocks)
+        		{
+        			if(tmp.leaderLine==Integer.parseInt(isOnlyGoto(yendline)))
+        			{
+        				y.next.add(tmp);
+        			}
+        		}
+        	}
+        	else
+        	{
+        		for(BasicBlock tmp:basicBlocks)
+        		{
+        			if(tmp.leaderLine==y.endLine+1)
+        			{
+        				y.next.add(tmp);
+        			}
+        		}
+        	}
+        	
+        }
+        System.out.println("FOLLOWING ARE THE BASIC BLOCKS");
+        for(BasicBlock b:basicBlocks)
+        {
+        	b.printBB();
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        
+        
+        //////////////////////////////////////////////////////////////////////////
+        // find GEN
+        System.out.println("Following is GEN");
+        for(BasicBlock b: basicBlocks)
+        {
+        	for(int ii=b.leaderLine;ii<=b.endLine;ii++)
+        	{
+        		if(isAssignment(lines.get(ii-1))!="-1")
+        		{
+        			b.gen.add(ii);
+        			b.genVairables.add(isAssignment(lines.get(ii-1)));
+        		}
+        	}
+        	System.out.println(b.genVairables+" "+b.gen+"");
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+
+        //////////////////////////////////////////////////////////////////////////
+        //find KILL
+        System.out.println("Following is KILL");
+        for(int ii=0;ii<basicBlocks.size();ii++)
+        {
+        	for(int jj=0;jj<basicBlocks.size();jj++)
+        	{
+        		if(ii!=jj)
+        		{
+        			BasicBlock ou=basicBlocks.get(ii);
+        			BasicBlock in=basicBlocks.get(jj);
+        			for(int kk=0;kk<in.genVairables.size();kk++)
+        			{
+        				if(ou.genVairables.contains(in.genVairables.get(kk)))
+        				{
+        					ou.kill.add(in.gen.get(kk));
+        				}
+        			}
+        			
+        		}
+        	}
+        	System.out.println(basicBlocks.get(ii).kill);
+        	
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        ///////////////////////////////////////////////////////////////////////////////
+        //find IN and OUT
+        HashMap< BasicBlock, ArrayList<BasicBlock> > predecessorTable = new HashMap<BasicBlock,ArrayList<BasicBlock>>();
+        for(BasicBlock b:basicBlocks)
+        {
+        	predecessorTable.put(b, new ArrayList<BasicBlock>());
+        	for(BasicBlock y:basicBlocks)
+        	{
+        		if(y!=b)
+        		{
+        			if(y.next.contains(b))
+        			{
+        				predecessorTable.get(b).add(y);
+        			}
+        		}
+        	}
+        }
+        System.out.println("PREDECESSOR TABLE:  "+predecessorTable);
+        System.out.println();
+        //        block    in and out set respectively   
+        HashMap<BasicBlock,ArrayList<HashSet<Integer>>> inouttable = new HashMap<BasicBlock,ArrayList<HashSet<Integer>>>();
+        //initialize inout table
+        for(BasicBlock b:basicBlocks)
+        {
+        	ArrayList<HashSet<Integer>> tmmp = new ArrayList<HashSet<Integer>>();
+        	tmmp.add(new HashSet<Integer>());
+        	tmmp.add(new HashSet<Integer>());
+        	for(Integer ii:b.gen)
+        	{
+        		tmmp.get(1).add(ii);
+        	}
+        	inouttable.put(b, tmmp);
+        }
+        HashMap<BasicBlock,ArrayList<HashSet<Integer>>> prev=new HashMap<BasicBlock,ArrayList<HashSet<Integer>>>(inouttable);
+        //run iteration till prev and current tables are not same
+        do
+        {
+        	System.out.println("KAKAMAMAMAMAKAKA");
+        	//update IN------ IN(B)= U OUT(P)
+        	for(BasicBlock b:basicBlocks)
+        	{
+        		for(BasicBlock predecessor:predecessorTable.get(b))
+        		{
+        			for(Integer ii:prev.get(predecessor).get(1))
+        			{
+        				System.out.print(ii+" ");
+        				inouttable.get(b).get(0).add(ii);
+        			}
+        		}
+        		System.out.println(b);
+        	}
+        	//update OUT------  OUT(B) = (IN(B)-KILL(B)) U GEN(B)
+        	for(BasicBlock b:basicBlocks)
+        	{
+        		HashSet<Integer> intemp = new HashSet<Integer>();
+        		for(Integer ii:inouttable.get(b).get(0))
+        			intemp.add(ii);
+        		for(Integer ii:b.kill)
+        		{
+        			if(intemp.contains(ii))
+        			{
+        				intemp.remove(ii);
+        			}
+        		}
+        		for(Integer ii:b.gen)
+        			intemp.add(ii);
+        		ArrayList<Integer> ttemp=new ArrayList<Integer>();
+        		for(Integer ii:inouttable.get(b).get(1))
+        			ttemp.add(ii);
+        		for(Integer ii:ttemp)
+        			inouttable.get(b).get(1).remove(ii);	
+        		for(Integer ii:intemp)
+        			inouttable.get(b).get(1).add(ii);
+        		
+        	}
+        }while(!prev.equals(inouttable));
+       
+    }
+/******************************************************************************************************************/   
+    public static String isConditionalGoto(String s)
+    {
+        if(s.contains("if")&&s.contains("goto"))
+        {
+            int i=s.length()-1;
+            String str="";
+            while(s.charAt(i)!=' ')
+            {
+                str =s.charAt(i)+str;
+                i--;
+            }
+            return str;
+        }
+        return "-1";
+    }
+    public static String isOnlyGoto(String s)
+    {
+        if(!s.contains("if")&&s.contains("goto"))
+        {
+            int i=s.length()-1;
+            String str="";
+            while(s.charAt(i)!=' ')
+            {
+                str =s.charAt(i)+str;
+                i--;
+            }
+            return str;
+        }
+        return "-1";
+    }
+    public static String isAssignment(String s)
+    {
+    	if(!s.contains("if")&&s.contains("="))
+    	{
+    		int i=0;
+    		String str="";
+    		while(s.charAt(i)!='=')
+    		{
+    			str+=s.charAt(i);
+    			i++;
+    		}
+    		return str;
+    	}
+    	return "-1";
+    }
+
+}
+
+class BasicBlock
+{
+	int leaderLine;
+	int endLine;
+	ArrayList<Integer> gen = new ArrayList<Integer>();
+	ArrayList<Integer> kill = new ArrayList<Integer>();
+	ArrayList<String> genVairables = new ArrayList<String>();
+	ArrayList<BasicBlock> next = new ArrayList<BasicBlock>();
+	
+	public void printBB()
+	{
+		System.out.println("-");
+		System.out.println("this is a BB with leaderline "+leaderLine+" and endline "+endLine);
+		System.out.println("its children are: "+next);
+	}
+	@Override
+	public String toString()
+	{
+		return "l-"+leaderLine+"#e-"+endLine;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+

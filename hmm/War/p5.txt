@@ -1,0 +1,296 @@
+
+package lp_prac5;
+import java.io.*;
+import java.util.*;
+public class Lp_prac5 {   
+    static int m=1;
+    static int k=1;  
+    public static String genTemp(){
+        String temp="T";
+        temp=temp+m++;
+        return temp;
+    }
+    public static int genCount()
+    {
+        int count=100;
+        count = count+k++;
+        return count;
+    }
+      public static void main(String[] args) throws IOException {
+          int n;
+          int a;
+          int back;
+          List<String> tac = new LinkedList<>();
+          List<Integer> go = new ArrayList<>();
+          Stack<Character>stack = new Stack<>();
+          int counter=100;
+        BufferedReader in = new BufferedReader(
+            new InputStreamReader(System.in));
+        String s;
+        List<String> list = new ArrayList<>();
+        while (!"/".equals(s = in.readLine())) {
+            list.add(s);
+        }
+//          System.out.println(list);
+          System.out.println("Output");
+        for(int i=0;i<list.size();i++)
+        {
+            if(list.get(i).contains("if"))
+            {
+//                System.out.println(list.get(i)+" goto__");
+                  go.add(genCount());
+                 
+                  tac.add(go.get(go.size()-1)+" "+list.get(i)+"goto "+(go.get(go.size()-1)+2));
+                  go.add(genCount());
+                  tac.add(go.get(go.size()-1)+" "+"goto ");
+//                System.out.println("goto__");
+            }
+            else if(list.get(i).contains("="))
+            {
+                String t = genTemp();
+                go.add(genCount());
+//                System.out.println(genCount()+" "+t+"="+list.get(i).substring(2));
+                tac.add(go.get(go.size()-1)+" "+t+"="+list.get(i).substring(2));
+               
+//                System.out.println(genCount()+" "+list.get(i).substring(0,1)+"="+t);
+                go.add(genCount());
+                tac.add(go.get(go.size()-1)+" "+list.get(i).substring(0,1)+"="+t);
+            }
+            else if(list.get(i).contains("{"))
+            {
+                stack.push(list.get(i).charAt(0));
+            }
+            else if(list.get(i).contains("}"))
+            {
+//                System.out.println(genCount()+" "+"goto__");
+                a = genCount();
+                tac.add(a+" "+"goto__");
+                stack.pop();
+            }
+        }
+        if(stack.isEmpty())
+        {
+            System.out.println("Output");
+            System.out.println(tac);         
+        }
+        else
+              System.out.println("incorrect");
+    }
+   
+
+/////////////////////////////////////////////////////
+
+package sdts;
+
+import java.io.*;
+import java.util.*;
+
+class AssignStatement{
+        String lhs;
+        String rhs;
+        public AssignStatement(String lhs,String rhs){
+            this.lhs=lhs;
+            this.rhs=rhs;
+        }
+        public String toString(){
+            return lhs+"="+rhs;
+        }
+    }
+
+public class Sdts {
+    static int i=1;
+    static List<String> al=new ArrayList<>();
+    static List<Integer> cases=new ArrayList<>();
+   
+    public static String genTemp(){
+        String temp="T";
+        temp=temp+i++;
+        return temp;
+    }
+   
+    public static void main(String[] args) throws Exception {
+        File file = new File("C:\\Users\\admin\\Desktop\\input");
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String st;
+        st=br.readLine();
+        String[] words=st.split(" ");
+        String temp=genTemp();
+        String rhs=words[2];
+        AssignStatement a=new AssignStatement(temp,rhs);
+        al.add(a.toString());
+        al.add("goto");
+        int c=2;
+        while (!(st = br.readLine()).equals("}")) {
+                words=st.split(" ");
+                    if(words[0].equals("if")){
+                        String temp1=genTemp();
+                        AssignStatement a1=new AssignStatement(temp1,words[5]);
+                        al.add(a1.toString());
+                        AssignStatement a2=new AssignStatement(words[3],temp1);
+                        al.add(a2.toString());                    
+                        al.add("goto");
+                        cases.add(c);
+                        c=c+3;
+                    }
+                   
+                    if(words[0].equals("default")){
+                        String temp1=genTemp();
+                        AssignStatement a1=new AssignStatement(temp1,words[4]);
+                        al.add(a1.toString());
+                        AssignStatement a2=new AssignStatement(words[2],temp1);
+                        al.add(a2.toString());
+                        al.add("goto");
+                        cases.add(c);
+                        c=c+3;
+                    }
+    }
+        for(int j=0;j<cases.size()-1;j++){
+            String s="if T1 = "+(j+1)+" goto "+ cases.get(j);
+            al.add(s);
+        }
+        String s1="goto "+cases.get(cases.size()-1);
+        al.add(s1);
+        String s2=al.get(1);
+        s2="goto "+c;
+        al.set(1, s2);
+        for(int j=0;j<al.size();j++){
+            System.out.println(j+") "+al.get(j));
+        }  
+    }  
+}
+
+
+//////////////////////////////////////////////////////////////
+package javaapplication71;
+import java.util.ArrayList;
+public class SDTS {
+
+    ArrayList<String> code = new ArrayList<>() ;
+    ArrayList<String > t = new ArrayList<>() ;
+    int count = 1 ;
+    String test="" ; String check ="" ;
+    ArrayList<String> cases = new ArrayList<>() ;   
+    public static void main(String[] args) {
+            new SDTS().tac() ;
+   }
+    public void tac(){
+     code.add (  new String("switch(a+b) " ))  ;
+     code.add (  new String("{ " ))  ;
+     code.add (  new String("case 4 : c=a+1 ; " ))  ;
+     code.add (  new String("case 5: c = b+1 ;  " ))  ;
+     code.add (  new String("default : c = a+2 ;  " ))  ;
+     code.add (  new String("} " ))  ;
+     
+     pass() ; int i = 100 ;
+     pass2() ;
+     for(String s : t){
+         System.out.println( i+")  "+s); i++ ;
+     }
+}
+    public void pass(){
+       
+        for(String s : code ){
+            if(s.contains("=") ){
+                assignment(s);
+            }
+            else if(s.contains("+") || s.contains("-") ||s.contains("*") ||s.contains("/")  ){
+                switchcase(s) ;
+            }
+            else if(s.contains("{")){
+             
+                t.add(new String("goto start"));
+            }
+            else if(s.contains("}")){ int k =0 ;
+               for(String test : cases){
+                   String condition = test.split("-")[0] ;
+                   String addthis =this.test +" =" + condition +" goto 10"+ test.split("-")[1] ;
+                   t.add( addthis) ;
+                   if(k==0)
+                       this.check =String.valueOf("1"+ t.indexOf( addthis  )) ;
+                   
+                   k++ ;
+               }
+               
+
+            }
+            else{
+               
+            }
+           
+        }
+       
+    }
+    public void assignment(String s){
+        String[] set = s.split("=") ;
+    
+          String a = "T"+String.valueOf(this.count) +" = "+ set[1].split(";")[0] ;
+       String b =  set[0].split(":")[1]+" = " +"T"+String.valueOf(this.count)  ;
+       
+     
+       t.add(a) ;
+       String address = String.valueOf(t.indexOf(a)) ;
+     
+       String condition = s.split(":")[0].substring(s.indexOf("case")+4) ;
+     if(s.contains("default"))
+         condition="" ;
+       cases.add(String.valueOf( condition +"-"+ address)) ;
+       t.add(b) ;
+       t.add("goto ___") ;   this.count++ ;
+     
+       
+    }
+  
+    public void switchcase(String s){
+           String temp = s.substring(s.indexOf("(")+1, s.indexOf(")")) ;
+           String a = "T"+String.valueOf(count) +" = " + temp ;
+           this.test = "T"+String.valueOf(count) ;
+           count++ ;
+           t.add(a) ;
+           
+           
+    }
+   
+    public void pass2(){
+        String changed =  "goto "+ this.check ; ;
+   
+        ArrayList<String > t2 = new ArrayList<>() ;
+           for(int i =0 ; i<t.size() ; i++){
+              String addthis = "" ;
+             
+     
+            if(t.get(i).contains("start")){
+                   
+               addthis = changed ;
+            }
+            else{
+                addthis = t.get(i);
+            }
+             t2.add(addthis) ;
+               
+        }
+       
+        this.t = t2 ;
+         
+       
+    }
+}
+
+
+
+OUTPUT-
+run:
+100)  T1 = a+b
+101)  goto 111
+102)  T2 = a+1 
+103)   c = T2
+104)  goto ___
+105)  T3 =  b+1 
+106)   c  = T3
+107)  goto ___
+108)  T4 =  a+2 
+109)   c  = T4
+110)  goto ___
+111)  T1 = 4  goto 102
+112)  T1 = 5 goto 105
+113)  T1 = goto 108
+}

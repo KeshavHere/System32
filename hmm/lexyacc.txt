@@ -1,0 +1,49 @@
+##lex
+
+%{
+	#include "a.tab.h"
+%}
+%%
+for {return FOR;}
+\( {return OB;}
+\) {return CB;}
+=|<|>|== {return ROP;}
+[a-zA-Z]+[a-zA-Z0-9]* {return ID;}
+[0-9]+ {return NUM;}
+"{" {return OCB;}
+"}" {return CCB;}
+; {return SC;}
+("++"|"--") {return INC;}
+\n {return NL;}
+. {return yytext[0];}
+%%
+
+##yacc
+%token FOR OB CB ROP ID NUM OCB CCB INC SC NL
+%left '+''-'
+%left '/''*'
+%%
+stmt : FOR OB ID ROP NUM SC ID ROP NUM SC ID INC CB NL OCB NL stmt NL CCB NL {printf("Is a valid for loop\n");}
+     | A
+     ;
+A : ID ROP E
+  ;
+E : E'+'E
+  | E'-'E
+  | E'*'E
+  | E'/'E
+  | '('E')'
+  | ID
+  | NUM
+%%
+int yyerror(char* msg)
+{
+	printf("not a valid loop\n");
+ return 0;
+}
+int main()
+{
+	yyparse();
+}
+
+##end

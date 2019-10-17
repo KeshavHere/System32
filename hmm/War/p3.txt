@@ -1,0 +1,136 @@
+public class Prac3 {
+static HashMap<Character,String> hmap = new HashMap<>();
+static LinkedHashMap<Character,String> firsts = new LinkedHashMap<>();
+static LinkedHashMap<Character,String> follows = new LinkedHashMap<>();
+public static void main(String[] args) throws FileNotFoundException {
+File file = new File("/home/poojay/LP/prac3b.txt");
+Scanner sc = new Scanner(file);
+while(sc.hasNextLine()){
+String[] arr = sc.nextLine().split("-",2);;
+hmap.put(arr[0].charAt(0),arr[1]);
+System.out.println(arr[1]);
+}
+System.out.println("==========================");
+for(Map.Entry elem:hmap.entrySet()){
+char s = (Character)elem.getKey();
+String result = findFirst(s+"");
+String followres = findFollow(s);
+char[] chars = result.toCharArray();
+char[] chars2 = followres.toCharArray();
+Set<Character> set = new LinkedHashSet<>();
+Set<Character> set2 = new LinkedHashSet<>();
+for(char c:chars)
+set.add(c);
+for(char c:chars2)
+set2.add(c);
+StringBuilder sb = new StringBuilder();
+StringBuilder sb2 = new StringBuilder();
+for(Character c:set)
+sb.append(c);
+for(Character c:set2)
+sb2.append(c);
+firsts.put(s, sb.toString());
+System.out.println("FIRST("+s+")"+" "+sb.toString());
+follows.put(s, sb2.toString());
+System.out.println("FOLLOW("+s+")"+" "+sb2.toString());
+}
+System.out.println("==========================");
+printTable();
+}
+private static void printTable(){
+String rhs = null;
+String[] arr = null;
+for(Map.Entry elem:firsts.entrySet()){
+char key = (Character)elem.getKey();
+
+System.out.println(key+"-->");
+rhs = hmap.get(key);
+arr = rhs.split(",");
+char[] value = ((String)elem.getValue()).toCharArray();
+for(int i=0;i<value.length;i++){
+if(value[i]!='z'){
+System.out.print(value[i]+":");
+for(int j=0;j<arr.length;j++){
+if(arr[j].charAt(0)==value[i]){
+System.out.println(arr[j]);
+break;
+}
+else{
+if(Character.isUpperCase(arr[j].charAt(0)) &&
+firsts.get(arr[j].charAt(0)).contains(String.valueOf(value[i])))
+System.out.println(arr[j]);
+}
+}
+}
+else{
+char[] epsilon= follows.get(key).toCharArray();
+for(int k=0;k<epsilon.length;k++){
+System.out.println(epsilon[k]+":"+value[i]);
+}
+}
+}
+System.out.println("");
+}
+}
+private static String findFirst(String s){
+String rhs = null;
+String[] arr = null;
+String result="";
+if(Character.isLowerCase(s.charAt(0)))
+return s.charAt(0)+"";
+else{
+rhs = hmap.get(s.charAt(0));
+arr = rhs.split(",");
+for(int i = 0;i< arr.length;i++){
+String med = findFirst(arr[i]);
+if(arr[i].length()>1 && Character.isUpperCase(arr[i].charAt(0))){
+if(!arr[i].equalsIgnoreCase("z") && med.contains("z")){
+med = med.replace("z","");
+result = result + findFirst(arr[i].substring(1));
+}
+}
+result = result + med;
+}
+if(s.length()>1 && result.contains("z")){
+result = result.replace("z","");
+result = result + findFirst(s.substring(1));
+
+}
+}
+return result;
+}
+private static String findFollow(char c){
+String result="";
+if(c=='S')
+return "$";
+for(Map.Entry elem : hmap.entrySet()){
+char key = (char)elem.getKey();
+String rhs = (String)elem.getValue();
+String[] values = rhs.split(",");
+for(int j=0;j< values.length;j++){
+if(values[j].contains(String.valueOf(c))){
+int i = values[j].indexOf(c);
+if(i<values[j].length()-1){
+String med = findFirst(values[j].substring(i+1));
+if(med.contains("z")){
+med = med.replace("z","");
+result = result + findFollow(key);
+}
+result = result+ med;
+}
+else{
+result = result + findFollow(key);
+}
+}
+}
+}
+return result;
+}
+}
+Input File:
+S-ABC,BCD,Xb
+A-bd,z
+B-CAX,z
+C-b,ec
+D-Bc,z
+X-e,z

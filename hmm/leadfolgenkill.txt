@@ -1,0 +1,314 @@
+package prac7;
+
+import java.io.BufferedReader;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.io.FileReader;
+import java.util.ArrayList;
+
+public class prac7 {
+
+	public static void main(String[] args) throws Exception {
+        BufferedReader reader;
+        reader = new BufferedReader(new FileReader("C:\\Users\\OM\\Desktop\\New folder\\txt.txt"));
+        String line = reader.readLine();
+        ArrayList<Integer> leaders=new ArrayList<Integer>();
+        ArrayList<String> lines = new ArrayList<String>();
+        
+        //find all the leaders and add all lines to lines arraylist
+        leaders.add(1);
+        int i=1;
+        while(line!=null)
+        {
+            System.out.println(i+" "+line);
+            lines.add(line);
+            if(isOnlyGoto(line)!="-1")
+            {
+                leaders.add(Integer.parseInt(isOnlyGoto(line)));
+            }
+            else if(isConditionalGoto(line)!="-1")
+            {
+                leaders.add(i+1);
+                leaders.add(Integer.parseInt(isConditionalGoto(line)));
+            }
+            i++;
+            line=reader.readLine();
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        leaders.sort(null);
+        System.out.println("These are the leaders: "+leaders);
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        reader.close();
+        System.out.println("Following is the lines ArrayList:");
+        System.out.println(lines);
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        /////////////////////////////////////////////////////////////////////
+        //create basic blocks
+        ArrayList<BasicBlock> basicBlocks = new ArrayList<BasicBlock>();
+        BasicBlock temp;
+        //System.out.println("mama");
+        for(int ii=0;ii<leaders.size()-1;ii++)
+        {
+        	temp=new BasicBlock();
+        	temp.leaderLine=leaders.get(ii);
+        	temp.endLine=leaders.get(ii+1)-1;
+        	//System.out.println("kaka");
+        	basicBlocks.add(temp);
+        }
+        temp = new BasicBlock();
+        temp.leaderLine=leaders.get(leaders.size()-1);
+        temp.endLine=lines.size();
+        basicBlocks.add(temp);
+        ////////////////////////////////////////////////////////////////////////
+        //create Program Flow Graph
+        for(BasicBlock y:basicBlocks)
+        {
+        	String yendline = lines.get(y.endLine-1);
+        	if(isConditionalGoto(yendline)!="-1")
+        	{
+        		//System.out.println("OUCH1"+isConditionalGoto(yendline));
+        		for(BasicBlock tmp:basicBlocks)
+        		{
+        			if(tmp.leaderLine==Integer.parseInt(isConditionalGoto(yendline)))
+        			{
+        				y.next.add(tmp);
+        			}
+        			if(tmp.leaderLine==y.endLine+1)
+        			{
+        				y.next.add(tmp);
+        			}
+        		}
+        	}
+        	else if(isOnlyGoto(yendline)!="-1")
+        	{
+        		//System.out.println("OUCH2"+isOnlyGoto(yendline));
+        		for(BasicBlock tmp:basicBlocks)
+        		{
+        			if(tmp.leaderLine==Integer.parseInt(isOnlyGoto(yendline)))
+        			{
+        				y.next.add(tmp);
+        			}
+        		}
+        	}
+        	else
+        	{
+        		for(BasicBlock tmp:basicBlocks)
+        		{
+        			if(tmp.leaderLine==y.endLine+1)
+        			{
+        				y.next.add(tmp);
+        			}
+        		}
+        	}
+        	
+        }
+        System.out.println("FOLLOWING ARE THE BASIC BLOCKS");
+        for(BasicBlock b:basicBlocks)
+        {
+        	b.printBB();
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        
+        
+        //////////////////////////////////////////////////////////////////////////
+        // find GEN
+        System.out.println("Following is GEN");
+        for(BasicBlock b: basicBlocks)
+        {
+        	for(int ii=b.leaderLine;ii<=b.endLine;ii++)
+        	{
+        		if(isAssignment(lines.get(ii-1))!="-1")
+        		{
+        			b.gen.add(ii);
+        			b.genVairables.add(isAssignment(lines.get(ii-1)));
+        		}
+        	}
+        	System.out.println(b.genVairables+" "+b.gen+"");
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+
+        //////////////////////////////////////////////////////////////////////////
+        //find KILL
+        System.out.println("Following is KILL");
+        for(int ii=0;ii<basicBlocks.size();ii++)
+        {
+        	for(int jj=0;jj<basicBlocks.size();jj++)
+        	{
+        		if(ii!=jj)
+        		{
+        			BasicBlock ou=basicBlocks.get(ii);
+        			BasicBlock in=basicBlocks.get(jj);
+        			for(int kk=0;kk<in.genVairables.size();kk++)
+        			{
+        				if(ou.genVairables.contains(in.genVairables.get(kk)))
+        				{
+        					ou.kill.add(in.gen.get(kk));
+        				}
+        			}
+        			
+        		}
+        	}
+        	System.out.println(basicBlocks.get(ii).kill);
+        	
+        }
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        ///////////////////////////////////////////////////////////////////////////////
+        //find IN and OUT
+        HashMap< BasicBlock, ArrayList<BasicBlock> > predecessorTable = new HashMap<BasicBlock,ArrayList<BasicBlock>>();
+        for(BasicBlock b:basicBlocks)
+        {
+        	predecessorTable.put(b, new ArrayList<BasicBlock>());
+        	for(BasicBlock y:basicBlocks)
+        	{
+        		if(y!=b)
+        		{
+        			if(y.next.contains(b))
+        			{
+        				predecessorTable.get(b).add(y);
+        			}
+        		}
+        	}
+        }
+        System.out.println("PREDECESSOR TABLE:  "+predecessorTable);
+        System.out.println();
+        //        block    in and out set respectively   
+        HashMap<BasicBlock,ArrayList<HashSet<Integer>>> inouttable = new HashMap<BasicBlock,ArrayList<HashSet<Integer>>>();
+        //initialize inout table
+        for(BasicBlock b:basicBlocks)
+        {
+        	ArrayList<HashSet<Integer>> tmmp = new ArrayList<HashSet<Integer>>();
+        	tmmp.add(new HashSet<Integer>());
+        	tmmp.add(new HashSet<Integer>());
+        	for(Integer ii:b.gen)
+        	{
+        		tmmp.get(1).add(ii);
+        	}
+        	inouttable.put(b, tmmp);
+        }
+        HashMap<BasicBlock,ArrayList<HashSet<Integer>>> prev=new HashMap<BasicBlock,ArrayList<HashSet<Integer>>>(inouttable);
+        //run iteration till prev and current tables are not same
+        do
+        {
+        	System.out.println("KAKAMAMAMAMAKAKA");
+        	//update IN------ IN(B)= U OUT(P)
+        	for(BasicBlock b:basicBlocks)
+        	{
+        		for(BasicBlock predecessor:predecessorTable.get(b))
+        		{
+        			for(Integer ii:prev.get(predecessor).get(1))
+        			{
+        				System.out.print(ii+" ");
+        				inouttable.get(b).get(0).add(ii);
+        			}
+        		}
+        		System.out.println(b);
+        	}
+        	//update OUT------  OUT(B) = (IN(B)-KILL(B)) U GEN(B)
+        	for(BasicBlock b:basicBlocks)
+        	{
+        		HashSet<Integer> intemp = new HashSet<Integer>();
+        		for(Integer ii:inouttable.get(b).get(0))
+        			intemp.add(ii);
+        		for(Integer ii:b.kill)
+        		{
+        			if(intemp.contains(ii))
+        			{
+        				intemp.remove(ii);
+        			}
+        		}
+        		for(Integer ii:b.gen)
+        			intemp.add(ii);
+        		ArrayList<Integer> ttemp=new ArrayList<Integer>();
+        		for(Integer ii:inouttable.get(b).get(1))
+        			ttemp.add(ii);
+        		for(Integer ii:ttemp)
+        			inouttable.get(b).get(1).remove(ii);	
+        		for(Integer ii:intemp)
+        			inouttable.get(b).get(1).add(ii);
+        		
+        	}
+        }while(!prev.equals(inouttable));
+       
+    }
+/******************************************************************************************************************/   
+    public static String isConditionalGoto(String s)
+    {
+        if(s.contains("if")&&s.contains("goto"))
+        {
+            int i=s.length()-1;
+            String str="";
+            while(s.charAt(i)!=' ')
+            {
+                str =s.charAt(i)+str;
+                i--;
+            }
+            return str;
+        }
+        return "-1";
+    }
+    public static String isOnlyGoto(String s)
+    {
+        if(!s.contains("if")&&s.contains("goto"))
+        {
+            int i=s.length()-1;
+            String str="";
+            while(s.charAt(i)!=' ')
+            {
+                str =s.charAt(i)+str;
+                i--;
+            }
+            return str;
+        }
+        return "-1";
+    }
+    public static String isAssignment(String s)
+    {
+    	if(!s.contains("if")&&s.contains("="))
+    	{
+    		int i=0;
+    		String str="";
+    		while(s.charAt(i)!='=')
+    		{
+    			str+=s.charAt(i);
+    			i++;
+    		}
+    		return str;
+    	}
+    	return "-1";
+    }
+
+}
+
+class BasicBlock
+{
+	int leaderLine;
+	int endLine;
+	ArrayList<Integer> gen = new ArrayList<Integer>();
+	ArrayList<Integer> kill = new ArrayList<Integer>();
+	ArrayList<String> genVairables = new ArrayList<String>();
+	ArrayList<BasicBlock> next = new ArrayList<BasicBlock>();
+	
+	public void printBB()
+	{
+		System.out.println("-");
+		System.out.println("this is a BB with leaderline "+leaderLine+" and endline "+endLine);
+		System.out.println("its children are: "+next);
+	}
+	@Override
+	public String toString()
+	{
+		return "l-"+leaderLine+"#e-"+endLine;
+	}
+}

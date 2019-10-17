@@ -1,0 +1,107 @@
+
+
+Execute:
+flex pgm_name.l
+bison -d pgm_name.y
+gcc -c lex.yy.c pgm_name.tab.c
+gcc -o a.out lex.yy.o pgm_name.tab.o -lfl
+./a.out
+
+
+prac2.l:
+
+%{
+#include "prac2.tab.h"
+%}
+
+%%
+[0-9]+ {yylval=atoi(yytext); return NUMBER;}
+[a-zA-Z][a-zA-Z0-9_]* {return ID;}
+\n {return NL;}
+. {return yytext[0];}
+%%
+
+prac 2.y:\
+
+%token NUMBER ID NL
+%left '+' '-'
+%left '*' '/'
+%%
+stmt : exp NL{printf("Valid expression");
+exit(0);}
+;
+exp : exp '+' exp   {printf("+");}
+| exp '-' exp       {printf("-");}
+| exp '*' exp       {printf("*");}
+| exp '/' exp       {printf("/");}
+| '('exp')'
+| NUMBER            {printf("%d",$1);}
+;
+%%
+
+int yyerror(char *msg)
+{
+printf("Invalid Expression\n");
+exit(0);
+}
+
+main()
+{
+printf("Enter Expression: ");
+yyparse();
+}
+
+prac 2b.l:
+
+ %{
+#include "prac2b.tab.h"
+%}
+
+%%
+"if" {return IF;}
+"else" {return ELSE;}
+[0-9]+ {yylval=atoi(yytext); return NUMBER;}
+[a-zA-Z][a-zA-Z0-9_]* {return ID;}
+\n {return N;}
+. {return yytext[0];}
+%%
+
+prac 2b.y:
+
+%token NUMBER ID N IF ELSE
+%left '+' '-'
+%left '*' '/'
+%%
+stmt : IF'('condition')'N'{'exp'}'N ELSE N'{'exp'}'    {printf("\nValid expression");
+exit(0);}
+;
+exp : exp '+' exp  
+| exp '-' exp      
+| exp '*' exp      
+| exp '/' exp      
+| exp '=' exp      
+| '('exp')'
+| NUMBER            {printf("%d",$1);}
+;
+
+condition : exp "==" exp
+| exp '>' exp
+| exp '<' exp
+| exp "!=" exp
+;
+%%
+
+int yyerror(char *msg)
+{
+printf("Invalid Expression\n");
+exit(0);
+}
+
+main()
+{
+yyparse();
+}
+
+
+TEXT FILE:
+if(9==8) {9=9+1;9=9+7}else{9=9-1;}

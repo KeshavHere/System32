@@ -1,0 +1,295 @@
+package lp_ll1;
+import java.util.*;
+public class Lp_ll1
+{    
+    public static void main(String[] args) 
+    {
+        Execution e=new Execution();
+        e.acceptInput();
+    }
+}
+//pr4
+class Execution
+{
+    private List<String> nonterminals=new LinkedList<>();
+    private Hashtable<String, Production> h=new Hashtable<>();
+    private List<String> terminals=new LinkedList<>();
+    private String[][] table;
+    public void acceptInput()
+    {
+        Scanner sc;
+        System.out.println("Epsilon is #");
+        
+        sc=new Scanner(System.in);
+        
+        System.out.println("Enter total no of Non terminals");
+        int totnt=sc.nextInt();
+        System.out.println("Enter non nerminals:");
+        for(int i=0;i<totnt;i++)
+        {
+            nonterminals.add(sc.next());
+        }
+
+        System.out.println("Enter total no of terminals");
+        int totalt=sc.nextInt();
+        System.out.println("Enter nerminals:");
+        for(int i=0;i<totalt;i++)
+        {
+            terminals.add(sc.next());
+        }
+
+//=======================================================================================================
+        
+//        nonterminals.add("S"); nonterminals.add("P");   nonterminals.add("Q");
+//        terminals.add("a"); terminals.add("b"); terminals.add("c"); terminals.add("q"); terminals.add("r"); 
+
+//=======================================================================================================
+        System.out.println("Enter production as A-bBcD,hU,#");
+        for(int i=0;i<totnt;i++)
+        {
+            System.out.println("Enter production for "+nonterminals.get(i)+" seperated by ,");
+            String s=sc.next();
+            String[] ss=s.split("-");
+            String name=ss[0];
+            
+            String g=ss[1];
+            String[] gg=g.split(",");
+            List<String> temp=new LinkedList<>();
+            for(int j=0;j<gg.length;j++)
+            {
+                temp.add(gg[j]);
+            }
+            h.put(name,new Production(name, temp));
+        }
+
+       
+        for(int i=totnt-1;i>=0;i--)
+        {
+            setfirstForNT(nonterminals.get(i));
+        }
+        printFirst();
+        getFollow();
+        createParsingTable();
+        int k=0;
+    }
+    
+    //--------------------------------To Get First--------------------------------
+    public void setfirstForNT(String s)
+    {
+        List<String> l=h.get(s).gives;
+        Production pr=h.get(s);
+        for(int i=0;i<l.size();i++)
+        {
+            Set<String> pfst=getFirst(l.get(i));
+            pr.first.addAll(pfst);
+        }
+    }
+    
+    //Returns first of a production i.e RHS and not complete LHS
+    public Set<String> getFirst(String s)
+    {
+        Set<String> l=new HashSet<>();
+            for(int i=0;i<s.length();i++)
+            {
+                Set<String> ll=null;
+                String f1=Character.toString(s.charAt(i));
+                if(!nonterminals.contains(f1))
+                {
+                    l.add(f1);
+                    break;
+                }
+                else
+                {
+                    ll=new HashSet(h.get(f1).first);
+//                    ll=h.get(f1).first;
+                    if(!ll.contains("#"))
+                    {
+                        l.addAll(ll);
+                        break;
+                    }
+                    else
+                    {
+                        if(i!=s.length()-1)     //------
+                            ll.remove("#");
+                        l.addAll(ll);
+                    }
+                }
+            }            
+        return l;
+    }
+    
+    public Set<String> getCompFirstOfNT(String s)
+    {
+        return h.get(s).first;
+    }
+    
+    public void printFirst()
+    {
+        for(int i=0;i<h.size();i++)
+        {
+            Production p=h.get(nonterminals.get(i));
+            System.out.println("First for"+p.name+"->"+p.first);
+        }
+    }
+   //--------------------------------END OF To Get First--------------------------------
+    
+    
+    public void getFollow()
+    {
+        h.get(nonterminals.get(0)).follow.add("$");
+        for(int i=1;i<nonterminals.size();i++)
+        {
+            String fornT=nonterminals.get(i);
+            for(int j=0;j<nonterminals.size();j++)
+            {
+                Production pr=h.get(nonterminals.get(j));
+                for(int k=0;k<pr.gives.size();k++)
+                {
+                    String gvs=pr.gives.get(k);
+                    if(gvs.contains(fornT))
+                        h.get(nonterminals.get(i)).follow.addAll(getFirtsForFollow(nonterminals.get(j),gvs,fornT));
+                }
+            }
+        }
+        
+        printFollow();
+    }
+    
+    public void printFollow()
+    {
+        for(int i=0;i<h.size();i++)
+        {
+            Production p=h.get(nonterminals.get(i));
+            System.out.println("Follow for"+p.name+"->"+p.follow);
+        }
+    }
+    
+    public Set<String> getFirtsForFollow(String bynt,String g,String fornT)      //nt is A in A->bc|Ca   g is 1 gives
+    {
+        Production pr=h.get(fornT);
+        Set<String> fol=new HashSet<>();
+        for(int i=0;i<g.length();i++)
+        {
+            if(Character.toString(g.charAt(i)).equals(fornT))
+            {
+                
+                if(i==g.length()-1)
+                {
+                    if(Character.toString(g.charAt(i)).equals(bynt))
+                        continue;
+                    fol.addAll(h.get(bynt).follow);
+                }
+                else
+                {
+                    fol=getFirst(g.substring(i+1));
+                }
+            }
+            
+        }
+        return fol;
+    }
+    
+    //--------------------------------END OF To Get Follow--------------------------------
+    
+    public void createParsingTable()
+    {
+        
+        for(int i=0;i<nonterminals.size();i++)
+        {
+            if(h.get(nonterminals.get(i)).first.equals(h.get(nonterminals.get(i)).follow))
+            {
+                System.out.println("It is not LL1 parser because "+nonterminals.get(i)+" contains more than 1 production in a cell");
+                return;
+            }
+        }
+        table=new String[nonterminals.size()+1][terminals.size()+2];
+        for(int i=0;i<table.length;i++)
+        {
+            Arrays.fill(table[i], "error");
+        }
+        table[0][0]="NT\\T";
+        
+        for(int i=1;i<terminals.size()+1;i++)
+        {
+            table[0][i]=terminals.get(i-1);
+        }
+        table[0][terminals.size()+1]="$";
+        for(int i=0;i<nonterminals.size();i++)
+        {
+            table[i+1][0]=nonterminals.get(i);
+        }
+        
+        first:for(int i=1;i<nonterminals.size()+1;i++)
+        {
+            String name=table[i][0];
+            second:for(int j=1;j<terminals.size()+2;j++)
+            {
+                String toadd="error";
+                String tchar=table[0][j];
+                Set<String> first=h.get(name).first;
+                if(first.contains(tchar))
+                {
+                    List<String> glist=h.get(name).gives;
+                    third:for(int k=0;k<glist.size();k++)
+                    {
+                        if(glist.get(k).contains(tchar))
+                        {
+                            toadd=name+"->"+glist.get(k);
+                            break third;
+                        }
+                        else
+                        {
+                            String igive=glist.get(k);
+                            for(int p=0;p<igive.length();p++)
+                            {
+                                if(nonterminals.contains(Character.toString(igive.charAt(p))))
+                                {
+                                    if(h.get(Character.toString(igive.charAt(p))).first.contains(tchar))
+                                    {
+                                        toadd=toadd=name+"->"+glist.get(k);
+                                        break third;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                table[i][j]=toadd;
+            }
+            //only if first contains follow:
+            if(h.get(name).first.contains("#"))
+            {
+                Iterator it=h.get(name).follow.iterator();
+                while(it.hasNext())
+                {
+                    int j=terminals.indexOf(it.next())+1;
+                    table[i][j]=name+"->#";
+                }
+            }
+        }
+        for(int i=0;i<table.length;i++)
+        {
+            for(int j=0;j<table[0].length;j++)
+            {
+                System.out.print(table[i][j]+"\t");
+            }
+            System.out.println("");
+        }
+    }
+}
+
+class Production
+{
+    String name;
+    List<String> gives;
+    Set<String> first;
+    Set<String> follow;
+    
+    public Production(String p,List l)
+    {
+        name=p;
+        gives=l;
+        first=new HashSet<>();
+        follow=new HashSet<>();
+    }
+}

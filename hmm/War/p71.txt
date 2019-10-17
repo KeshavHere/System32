@@ -1,0 +1,174 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class Prac7_lp {
+
+    public static void main(String[] args) {
+        String[] stmt={"b=1","c=2","a=b+c","d=a-b","d=c+d","c=b+c","e=a-b","d=b+c","e=e+1","b=c+d","c=b-d"};
+        int[] blocks={1,3,4,6,8,10};
+        Map<Integer,List<Integer>> gen=new HashMap<>();
+        Map<Integer,List<Integer>> kill=new HashMap<>();
+        Map<Integer,List<Integer>> inp=new HashMap<>();
+        Map<Integer,List<Integer>> outp=new HashMap<>();
+        Map<Integer,List<Integer>> inc=new HashMap<>();
+        Map<Integer,List<Integer>> outc=new HashMap<>();
+        Map<Integer,List<Integer>> pred=new HashMap<>();
+        pred.put(0, null);
+        List<Integer> li1=new ArrayList<>();
+        li1.add(0);
+        li1.add(3);
+        pred.put(1,li1);
+        List<Integer> li2=new ArrayList<>();
+        li2.add(1);
+        pred.put(2,li2);
+        List<Integer> li3=new ArrayList<>();
+        li3.add(1);
+        li3.add(2);
+        pred.put(3,li3);
+        List<Integer> li4=new ArrayList<>();
+        li4.add(2);
+        pred.put(4,li4);
+        List<Integer> li5=new ArrayList<>();
+        li5.add(3);
+        pred.put(5,li5);
+        //li.clear();
+        //System.out.println("pred");
+        //System.out.println(pred);
+        for(int b=0;b<blocks.length;b++){
+            List<Integer> l=new ArrayList<>();
+            int j;
+            if(b==0)
+                j=0;
+            else
+                j=blocks[b-1]+1;
+            for(int i=j;i<=blocks[b];i++){
+            if(stmt[i].contains("=")){
+                 l.add(i);
+                }
+           }
+            gen.put(b,l);
+        }
+        System.out.println("gen");
+          System.out.println(gen);
+        Map<Character,List<Integer>> map=new HashMap<>();
+        for(int i=0;i<stmt.length;i++){
+            char c=stmt[i].charAt(0);
+            for(int j=0;j<stmt.length;j++){
+                if(c==stmt[j].charAt(0)){
+                    if(map.containsKey(c)){
+                        List<Integer> l=map.get(c);
+                        if(!l.contains(j))
+                             l.add(j);
+                        map.replace(c,l);
+                    }
+                    else{
+                         List<Integer> l=new ArrayList<>();
+                         l.add(j);
+                         map.put(c,l);
+                    }
+                }
+            }
+        }
+        //System.out.println(map);
+        for(int b=0;b<blocks.length;b++)
+        {
+            List<Integer> l=new ArrayList<>();
+            int j;
+            if(b==0)
+                j=0;
+            else
+                j=blocks[b-1]+1;
+            for(int i=j;i<=blocks[b];i++){
+              l.addAll(map.get(stmt[i].charAt(0)));
+              l.remove(new Integer(i));
+           }
+            kill.put(b,l);
+        }
+        System.out.println("kill");
+        System.out.println(kill);
+        
+        //in intially
+        for(int b=0;b<blocks.length;b++){
+             inp.put(b,null);
+             outp.put(b,gen.get(b));
+        }
+        System.out.println("OUTP initially");
+        System.out.println(outp);
+        boolean flag=false;
+        while(!flag){
+         for(int b=0;b<blocks.length;b++){
+            if(b!=0){
+                if(!inc.containsKey(b)){
+                   inc.put(b,computeIN(pred.get(b),outp));
+                   outc.put(b,computeOUT(inc.get(b),gen.get(b),kill.get(b)));
+                }
+                else{
+                    inc.replace(b,computeIN(pred.get(b),outp));
+                    outc.replace(b,computeOUT(inc.get(b),gen.get(b),kill.get(b)));
+                }
+            }
+            else{
+                inc.put(b,null);
+                outc.put(b,computeOUT(inc.get(b),gen.get(b),kill.get(b)));
+            }
+         }
+         if(inc==inp && outc==outp)
+             flag=true;
+         inp=inc;
+         outp=outc;
+        }
+         System.out.println("inp");
+         System.out.println(inp);
+         System.out.println("inc");
+         System.out.println(inc);
+         System.out.println("outp");
+         System.out.println(outp);
+         System.out.println("outc");
+         System.out.println(outc);
+    }
+    
+    public static List<Integer> computeIN(List<Integer> pred,Map<Integer,List<Integer>> outp){
+        List<Integer> li=new ArrayList<>();
+        for(int i=0;i<pred.size();i++){
+            //System.out.println("pred");
+            //System.out.println(pred.get(i));
+            //if(pred.get(i)!=0)
+                 li.addAll(outp.get(pred.get(i)));
+        }
+        //System.out.println("computeIn");
+        //System.out.println(li);
+        return li;
+    }
+     public static List<Integer> computeOUT(List<Integer> inc,List<Integer> gen,List<Integer> kill){
+         List<Integer> li=new ArrayList<>();
+        if(inc!=null){
+            li.addAll(inc);
+            for(int j=0;j<kill.size();j++){
+                if(li.contains(kill.get(j)))
+                    li.remove(new Integer(kill.get(j)));
+            }
+        }
+            li.addAll(gen);
+         return li;
+    }
+    
+}
+OUTPUT:
+run:
+gen
+{0=[0, 1], 1=[2, 3], 2=[4], 3=[5, 6], 4=[7, 8], 5=[9, 10]}
+kill
+{0=[9, 5, 10], 1=[4, 7], 2=[3, 7], 3=[1, 10, 8], 4=[3, 4, 6], 5=[0, 1, 5]}
+OUTP initially
+{0=[0, 1], 1=[2, 3], 2=[4], 3=[5, 6], 4=[7, 8], 5=[9, 10]}
+inp
+{0=null, 1=[0, 1, 2, 3, 4, 5, 6], 2=[0, 1, 2, 3, 5, 6, 2, 3], 3=[0, 1, 2, 3, 5, 6, 2, 3, 0, 1, 2, 5, 6, 2, 3, 4], 4=[0, 1, 2, 5, 6, 2, 3, 4], 5=[0, 2, 3, 5, 6, 2, 3, 0, 1, 2, 5, 6, 2, 3, 4, 5, 6]}
+inc
+{0=null, 1=[0, 1, 2, 3, 4, 5, 6], 2=[0, 1, 2, 3, 5, 6, 2, 3], 3=[0, 1, 2, 3, 5, 6, 2, 3, 0, 1, 2, 5, 6, 2, 3, 4], 4=[0, 1, 2, 5, 6, 2, 3, 4], 5=[0, 2, 3, 5, 6, 2, 3, 0, 1, 2, 5, 6, 2, 3, 4, 5, 6]}
+outp
+{0=[0, 1], 1=[0, 1, 2, 3, 5, 6, 2, 3], 2=[0, 1, 2, 5, 6, 2, 3, 4], 3=[0, 2, 3, 5, 6, 2, 3, 0, 1, 2, 5, 6, 2, 3, 4, 5, 6], 4=[0, 1, 2, 5, 2, 7, 8], 5=[2, 3, 6, 2, 3, 0, 2, 5, 6, 2, 3, 4, 5, 6, 9, 10]}
+outc
+{0=[0, 1], 1=[0, 1, 2, 3, 5, 6, 2, 3], 2=[0, 1, 2, 5, 6, 2, 3, 4], 3=[0, 2, 3, 5, 6, 2, 3, 0, 1, 2, 5, 6, 2, 3, 4, 5, 6], 4=[0, 1, 2, 5, 2, 7, 8], 5=[2, 3, 6, 2, 3, 0, 2, 5, 6, 2, 3, 4, 5, 6, 9, 10]}
+BUILD SUCCESSFUL (total time: 0 seconds)

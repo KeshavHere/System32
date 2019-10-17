@@ -1,0 +1,90 @@
+
+package lp_prac6;
+// To Construct Leader and basic blocks and Program Flow Graph for the given program
+import java.util.*;
+
+public class Lp_Prac6
+{
+    public static void main(String[] args)
+    {
+        LinkedList<String> tac=new LinkedList<>();
+        LinkedList<Integer> leader=new LinkedList<>();
+        LinkedList<Integer> b=new LinkedList<>();
+        int x=1;
+        tac.add("f=1");
+        tac.add("i=2");
+        tac.add("if i>x goto 8");
+        tac.add("f=f*1");
+        tac.add("t=i+1");
+        tac.add("i=t");
+        tac.add("goto 3");
+        tac.add("Calling Program");
+       
+        leader.add(0);
+        for(int i=1;i<tac.size();i++)
+        {
+            if(tac.get(i).contains("goto"))
+            {
+                String[] s=tac.get(i).split("goto");
+                leader.add(Integer.valueOf(s[1].trim())-1);
+                if(tac.get(i).contains("if"))
+                {
+                    leader.add(i+1);
+                }
+            }
+        }
+        Collections.sort(leader);
+        System.out.println("Leader Statements:- ");
+        for(int i=0;i<leader.size();i++)
+        {
+            System.out.println(tac.get(leader.get(i)));
+        }
+       
+        System.out.println("\nNumber of Blocks: "+leader.size());
+       
+        for(x=1;x<leader.size();x++)
+        {
+            System.out.println("Block "+x);
+            for(int j=leader.get(x-1);j<leader.get(x);j++)
+                System.out.println("\t"+tac.get(j));          
+        }
+        System.out.println("Block "+x);
+        for(int j=leader.get(x-1);j<tac.size();j++)
+                System.out.println("\t"+tac.get(j));
+       
+        System.out.println("\nProgram Flow Graph");
+        for(int i=1;i<leader.size();i++)
+        {  
+            b.clear();
+            if(!tac.get(leader.get(i)-1).contains("goto"))
+            {
+                b.add(i+1);
+            }
+            else
+            {
+                String[] s=tac.get(leader.get(i)-1).split("goto");
+                int n=Integer.valueOf(s[1].trim())-1;
+                for(int j=leader.size()-1;j>=0;j--)
+                {
+                   if(n>=leader.get(j))
+                   {
+                       b.add(j+1);
+                       break;
+                   }
+                   
+                }
+                if(tac.get(leader.get(i)-1).contains("if"))
+                {
+                    b.add(i+1);
+                }
+            }
+            System.out.println("Block "+i+" goes to");
+           
+            for(int k=0;k<b.size();k++)
+            {
+                System.out.println("\t Block "+b.get(k));
+            }
+        }     
+    }
+   
+}

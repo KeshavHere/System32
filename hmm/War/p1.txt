@@ -1,0 +1,82 @@
+PRACTICAL 1-A:
+LEX FILE: 
+%{
+#include<stdio.h>
+%}
+%%
+#include<[a-z]+.h> {ECHO; printf("\t header file\n");}
+(if|else|elif|int|char|float|double|while|for|switch|return|static) {ECHO; printf("\tKeywords\n");}
+(printf|scanf|main) {ECHO; printf("\tFunction\n");}
+([a-zA-Z][0-9])+|[a-zA-Z]+|"_" {ECHO; printf("\tIdentifier\n");}
+[0-9]+ {ECHO; printf("\tDIGIT\n");}
+[0-9]+ .[0-9] {ECHO; printf("\tfloat\n");}
+("+"|"-"|"*"|"/"|"%"|"=") {ECHO; printf("\toperator\n");}
+(","|";"|"&"("|")") {ECHO; printf("\tSymbol\n");}
+\".*\" {ECHO; printf("\tString\n");}
+[0-9](.[0-9]+)?E[0-9](.[0-9]+)? {ECHO; printf("\tExponential number\n");}
+%%
+main()
+{
+yylex();
+return 1;
+}
+int yywrap()
+{
+return(1);
+}
+
+C FILE: 
+#include<stdio.h>
+main()
+{
+int a=1;
+1219E123
+float b=1.5;
+int c=2;
+d=a+c;
+printf("sum=%d",d);
+}
+
+EXECUTE USING:
+lex pgm_name.l
+cc lex.yy.c-ll
+./a.out<input.txt
+
+PRACTICAL 1-B:
+
+%{
+#include<stdio.h>
+int words=0;
+int c=0;
+int s=0;
+int lines=0;
+int digits=0;
+int spc=0;
+%}
+
+%%
+[0-9]+\/[0-9]+\/[0-9]+ {ECHO; printf(": Date of birth\n");}
+[a-z]+[a-z0-9]*((_|.)[a-z0-9]+)@("gmail"|"rknec"|"yahoo").("com"|"in"|"edu") {ECHO; printf(": email id\n");}
+[0-9]{10} {ECHO; printf(": Mobile number\n");}
+[ ] words++;
+[A-Z] c++;
+[a-z] s++;
+\n lines++;
+[0-9] digits++;
+[!@#$%^&*] spc++;
+
+%%
+main()
+{
+yylex();
+printf("Number of line=%d\n",lines);
+printf("Number of capital letters =%d\n",c);
+printf("Number of small letters= %d\n",s);
+printf("Number of digits= %d\n",digits);
+printf("Number of special characters=%d\n",spc);
+printf("Number of words= %d\n",(words+lines));
+}
+int yywrap()
+{
+return(1);
+}
